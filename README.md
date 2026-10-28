@@ -14,7 +14,6 @@ A menu-driven Python network reconnaissance and monitoring toolkit for **authori
 - [Installation](#installation)
 - [Run the Scanner](#run-the-scanner)
 - [Menu Reference](#menu-reference)
-- [Example Workflow](#example-workflow)
 - [Permissions and Platform Notes](#permissions-and-platform-notes)
 - [Understanding Results](#understanding-results)
 - [Troubleshooting](#troubleshooting)
@@ -103,23 +102,7 @@ cd <your-repository-directory>
 
 If you are not using Git yet, create a folder and put `Network_Scanner.py` inside it.
 
-### 2. Create a virtual environment
-
-**Windows (PowerShell):**
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-**macOS / Linux:**
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install Python dependencies
+### 2. Install Python dependencies
 
 ```bash
 python -m pip install --upgrade pip
@@ -128,7 +111,7 @@ python -m pip install python-nmap requests tqdm psutil scapy pyOpenSSL paramiko 
 
 `PyMySQL` is included for the optional MySQL check. If a package fails to install on your platform, consult that package's installation instructions.
 
-### 4. Install Nmap
+### 3. Install Nmap
 
 Install Nmap using the official download page: <https://nmap.org/download.html>.
 
