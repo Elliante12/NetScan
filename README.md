@@ -4,7 +4,7 @@ A menu-driven Python network reconnaissance and monitoring toolkit for **authori
 
 > **Version:** 0.3.0 (as displayed by the application)  
 > **Interface:** Interactive terminal menu  
-> **Primary file:** `Network_Scanner(1).py`
+> **Primary file:** `Network_Scanner.py`
 
 ## Table of Contents
 
@@ -101,7 +101,7 @@ git clone <your-repository-url>
 cd <your-repository-directory>
 ```
 
-If you are not using Git yet, create a folder and put `Network_Scanner(1).py` inside it.
+If you are not using Git yet, create a folder and put `Network_Scanner.py` inside it.
 
 ### 2. Create a virtual environment
 
@@ -145,7 +145,7 @@ If the command is not found, add Nmap to your `PATH` or reinstall it with the ap
 From the directory containing the script:
 
 ```bash
-python "Network_Scanner(1).py"
+python "Network_Scanner.py"
 ```
 
 On some systems, the command may be `python3` instead of `python`.
@@ -184,17 +184,6 @@ The program opens an interactive menu. Enter the number for the operation you wa
 | `0` | Exit | Closes the application |
 
 The menu is the source of truth for the option numbers. Inputs and output details may differ depending on the selected operation and the current code version.
-
-## Example Workflow
-
-Use only a host or network you own or have written permission to test.
-
-1. **Start the program** using the command above.
-2. **Discover devices** by selecting option `3` and reviewing the discovered-device table.
-3. **Inspect a single authorized host** with option `2`, choosing a conservative port range.
-4. **Review a service** with option `17` if you have a specific open port to inspect.
-5. **Review a website you administer** with option `14`, entering its base URL (for example, `https://staging.example.test/`).
-6. **Export or generate a report** using options `5` or `23`, where supported by the current run.
 
 Treat any finding as a lead for manual verification rather than proof of a vulnerability.
 
@@ -270,14 +259,8 @@ The packet-sniffing implementation attempts to extract credential-like strings f
 
 ## Contributing
 
-Contributions are welcome. A helpful pull request should:
-
-1. Explain the issue or improvement.
-2. Include clear reproduction steps for bug fixes.
-3. Keep scans scoped to authorized targets.
-4. Update this README when options, dependencies, or platform requirements change.
-5. Avoid committing credentials, packet captures, private IP inventories, or scan reports containing sensitive information.
+Contributions are welcome. 
 
 ## License
 
-No license is specified in the provided source. Add a `LICENSE` file before redistributing the project, and choose a license that matches your intended use.
+Licensed under the MIT license.

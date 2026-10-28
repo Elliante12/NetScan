@@ -35,6 +35,7 @@ import platform
 # ================================================================
 class Colors:
     HEADER = '\033[95m'
+    WHITE = '\033[97m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
@@ -42,7 +43,6 @@ class Colors:
     END = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    CYAN = '\033[96m'
     MAGENTA = '\033[95m'
 
 def print_colored(message, color=Colors.GREEN, end='\n'):
@@ -169,14 +169,14 @@ class PacketSniffer:
             if packet.haslayer(scapy.ARP):
                 arp = packet[scapy.ARP]
                 if arp.op == 1:
-                    print_colored(f"[ARP Request] {arp.psrc} is looking for {arp.pdst}", Colors.CYAN)
+                    print_colored(f"[ARP Request] {arp.psrc} is looking for {arp.pdst}", Colors.WHITE)
                 elif arp.op == 2:
-                    print_colored(f"[ARP Response] {arp.psrc} is at {arp.hwsrc}", Colors.CYAN)
+                    print_colored(f"[ARP Response] {arp.psrc} is at {arp.hwsrc}", Colors.WHITE)
             
             self.packets.append(packet)
         
         try:
-            print_colored("[*] Sniffing packets (Ctrl+C to stop)...", Colors.CYAN)
+            print_colored("[*] Sniffing packets (Ctrl+C to stop)...", Colors.WHITE)
             scapy.sniff(iface=interface, prn=process_packet, count=count, timeout=timeout)
         except KeyboardInterrupt:
             print_colored("\n[*] Sniffing stopped", Colors.YELLOW)
@@ -240,7 +240,7 @@ class BandwidthMonitor:
     
     def monitor_bandwidth(self, interval=2, duration=None):
         """Monitor bandwidth usage in real-time"""
-        print_colored(f"[*] Monitoring bandwidth (interval: {interval}s)", Colors.CYAN)
+        print_colored(f"[*] Monitoring bandwidth (interval: {interval}s)", Colors.WHITE)
         print_colored("[*] Press Ctrl+C to stop", Colors.YELLOW)
         
         start_time = time.time()
@@ -439,7 +439,7 @@ class VulnerabilityScanner:
             if port in self.vuln_db:
                 vuln_info = self.vuln_db[port]
                 severity = vuln_info['severity']
-                color = Colors.RED if severity == 'CRITICAL' else Colors.YELLOW if severity == 'HIGH' else Colors.CYAN
+                color = Colors.RED if severity == 'CRITICAL' else Colors.YELLOW if severity == 'HIGH' else Colors.WHITE
                 
                 print_colored(f"\n[!] Port {port} ({vuln_info['name']}) - {severity} Severity", color)
                 for vuln in vuln_info['vulns']:
@@ -588,7 +588,7 @@ class WiFiScanner:
     
     def scan_wifi(self):
         """Scan for available WiFi networks"""
-        print_colored("[*] Scanning for WiFi networks...", Colors.CYAN)
+        print_colored("[*] Scanning for WiFi networks...", Colors.WHITE)
         self.networks = []
         
         try:
@@ -666,7 +666,7 @@ class WiFiScanner:
     def _display_networks(self):
         """Display found networks"""
         print("\n" + "=" * 80)
-        print_colored(f"{'#':<4} {'SSID':<35} {'Signal':<15} {'Auth':<15} {'Encrypted':<10}", Colors.CYAN)
+        print_colored(f"{'#':<4} {'SSID':<35} {'Signal':<15} {'Auth':<15} {'Encrypted':<10}", Colors.WHITE)
         print("=" * 80)
         
         for idx, net in enumerate(self.networks, 1):
@@ -680,11 +680,11 @@ class WiFiScanner:
             print(f"{idx:<4} {ssid:<35} {signal:<15} {auth:<15} {encrypted:<10}")
         
         print("=" * 80)
-        print_colored(f"[*] Total networks: {len(self.networks)}", Colors.CYAN)
+        print_colored(f"[*] Total networks: {len(self.networks)}", Colors.WHITE)
     
     def connect_to_network(self, ssid, password=None):
         """Connect to a WiFi network"""
-        print_colored(f"[*] Attempting to connect to {ssid}...", Colors.CYAN)
+        print_colored(f"[*] Attempting to connect to {ssid}...", Colors.WHITE)
         
         try:
             if os.name == 'nt':
@@ -731,7 +731,7 @@ class WebAppScanner:
     
     def scan_web_app(self, base_url):
         """Scan web application for vulnerabilities"""
-        print_colored(f"\n[*] Scanning web application: {base_url}", Colors.CYAN)
+        print_colored(f"\n[*] Scanning web application: {base_url}", Colors.WHITE)
         print_colored("[*] This may take several minutes...", Colors.YELLOW)
         
         checks = {
@@ -963,7 +963,7 @@ class WebAppScanner:
                 info.append(f"PHP Version: {php_match.group(1)}")
             
             if info:
-                print_colored(f"[i] Server info: {', '.join(info)}", Colors.CYAN)
+                print_colored(f"[i] Server info: {', '.join(info)}", Colors.WHITE)
                 return {'type': 'Server Info', 'details': info}
         except:
             pass
@@ -975,7 +975,7 @@ class WebAppScanner:
             return
         
         print("\n" + "=" * 80)
-        print_colored("WEB APPLICATION SCAN RESULTS", Colors.CYAN)
+        print_colored("WEB APPLICATION SCAN RESULTS", Colors.WHITE)
         print("=" * 80)
         
         for vuln in self.vulnerabilities:
@@ -995,7 +995,7 @@ class ARPMonitor:
     
     def monitor_arp(self, interface=None, duration=None):
         """Monitor for ARP spoofing attacks"""
-        print_colored("[*] Monitoring for ARP spoofing...", Colors.CYAN)
+        print_colored("[*] Monitoring for ARP spoofing...", Colors.WHITE)
         print_colored("[*] Press Ctrl+C to stop", Colors.YELLOW)
         
         def process_packet(packet):
@@ -1053,7 +1053,7 @@ class CertificateAnalyzer:
     
     def analyze_certificate(self, hostname, port=443):
         """Analyze SSL certificate"""
-        print_colored(f"\n[*] Analyzing certificate for {hostname}:{port}", Colors.CYAN)
+        print_colored(f"\n[*] Analyzing certificate for {hostname}:{port}", Colors.WHITE)
         
         try:
             # Get certificate
@@ -1125,7 +1125,7 @@ class CertificateAnalyzer:
     def _display_certificate(self, info):
         """Display certificate information"""
         print("\n" + "=" * 60)
-        print_colored("CERTIFICATE INFORMATION", Colors.CYAN)
+        print_colored("CERTIFICATE INFORMATION", Colors.WHITE)
         print("=" * 60)
         print(f"  Hostname    : {info['hostname']}")
         print(f"  Issuer      : {info['issuer']}")
@@ -1155,7 +1155,7 @@ class DNSEnumerator:
     
     def enumerate(self, domain):
         """Enumerate DNS records for a domain"""
-        print_colored(f"\n[*] Enumerating DNS for {domain}", Colors.CYAN)
+        print_colored(f"\n[*] Enumerating DNS for {domain}", Colors.WHITE)
         self.records = {}
         self.subdomains = []
         
@@ -1201,7 +1201,7 @@ class DNSEnumerator:
             'monitoring', 'stats', 'status', 'cdn', 'static', 'assets'
         ]
         
-        print_colored(f"\n[*] Enumerating subdomains", Colors.CYAN)
+        print_colored(f"\n[*] Enumerating subdomains", Colors.WHITE)
         
         for sub in common_subdomains:
             target = f"{sub}.{domain}"
@@ -1244,7 +1244,7 @@ class ServiceFingerprinter:
     
     def fingerprint_service(self, ip, port, timeout=3):
         """Fingerprint a service by grabbing its banner"""
-        print_colored(f"\n[*] Fingerprinting service on {ip}:{port}", Colors.CYAN)
+        print_colored(f"\n[*] Fingerprinting service on {ip}:{port}", Colors.WHITE)
         
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1397,7 +1397,7 @@ class RemoteAccessScanner:
                 1433: 'MSSQL'
             }
         
-        print_colored(f"\n[*] Scanning remote access on {ip}", Colors.CYAN)
+        print_colored(f"\n[*] Scanning remote access on {ip}", Colors.WHITE)
         
         for port, service in ports.items():
             try:
@@ -1499,7 +1499,7 @@ class NetworkTopologyMapper:
     
     def trace_route(self, target, max_hops=30):
         """Trace route to target"""
-        print_colored(f"\n[*] Tracing route to {target}", Colors.CYAN)
+        print_colored(f"\n[*] Tracing route to {target}", Colors.WHITE)
         self.hops = []
         
         for ttl in range(1, max_hops + 1):
@@ -1527,7 +1527,7 @@ class NetworkTopologyMapper:
         if network_range is None:
             network_range = "192.168.1.0/24"
         
-        print_colored(f"\n[*] Discovering network topology: {network_range}", Colors.CYAN)
+        print_colored(f"\n[*] Discovering network topology: {network_range}", Colors.WHITE)
         
         # Get all devices
         scanner = NetworkScanner()
@@ -1569,7 +1569,7 @@ class ActiveDirectoryScanner:
     
     def connect(self):
         """Connect to Active Directory"""
-        print_colored(f"\n[*] Connecting to AD: {self.dc}", Colors.CYAN)
+        print_colored(f"\n[*] Connecting to AD: {self.dc}", Colors.WHITE)
         
         try:
             server = ldap3.Server(self.dc, get_info=ldap3.ALL)
@@ -1585,7 +1585,7 @@ class ActiveDirectoryScanner:
         if not self.connection:
             return []
         
-        print_colored("\n[*] Enumerating AD users...", Colors.CYAN)
+        print_colored("\n[*] Enumerating AD users...", Colors.WHITE)
         self.users = []
         
         try:
@@ -1616,7 +1616,7 @@ class ActiveDirectoryScanner:
         if not self.connection:
             return []
         
-        print_colored("\n[*] Enumerating AD computers...", Colors.CYAN)
+        print_colored("\n[*] Enumerating AD computers...", Colors.WHITE)
         self.computers = []
         
         try:
@@ -1645,7 +1645,7 @@ class ActiveDirectoryScanner:
         if not self.connection:
             return []
         
-        print_colored("\n[*] Enumerating AD groups...", Colors.CYAN)
+        print_colored("\n[*] Enumerating AD groups...", Colors.WHITE)
         self.groups = []
         
         try:
@@ -1851,7 +1851,7 @@ class DeauthDetector:
             self.alerts.append(alert)
             
             color = Colors.RED if severity == "CRITICAL" else (
-                    Colors.YELLOW if severity == "HIGH" else Colors.CYAN)
+                    Colors.YELLOW if severity == "HIGH" else Colors.WHITE)
             
             print_colored(f"\n[!] {severity} — {frame['type'].upper()} ATTACK DETECTED", color)
             print_colored(f"    From    : {src}", Colors.END)
@@ -1890,10 +1890,10 @@ class DeauthDetector:
                           "monitor mode first (e.g. `airmon-ng start wlan0`).", Colors.RED)
             return []
         
-        print_colored(f"[*] Deauth detector listening on {interface}", Colors.CYAN)
+        print_colored(f"[*] Deauth detector listening on {interface}", Colors.WHITE)
         if self.my_mac:
-            print_colored(f"[*] Your MAC: {self.my_mac}", Colors.CYAN)
-        print_colored(f"[*] Alert threshold: {threshold} frames/sec", Colors.CYAN)
+            print_colored(f"[*] Your MAC: {self.my_mac}", Colors.WHITE)
+        print_colored(f"[*] Alert threshold: {threshold} frames/sec", Colors.WHITE)
         print_colored("[*] Press Ctrl+C to stop\n", Colors.YELLOW)
         
         try:
@@ -1978,7 +1978,7 @@ class PortKnockScanner:
     
     def scan_port_knock(self, target, ports, timeout=1):
         """Scan for port knock sequences"""
-        print_colored(f"\n[*] Scanning port knock on {target}", Colors.CYAN)
+        print_colored(f"\n[*] Scanning port knock on {target}", Colors.WHITE)
         print_colored(f"[*] Testing sequence: {ports}", Colors.YELLOW)
         
         self.responses = []
@@ -2011,9 +2011,9 @@ class PortKnockScanner:
             # Try to detect service
             for port in open_ports:
                 if port['port'] == 22:
-                    print_colored("    [i] Likely SSH knock sequence", Colors.CYAN)
+                    print_colored("    [i] Likely SSH knock sequence", Colors.WHITE)
                 elif port['port'] == 80 or port['port'] == 443:
-                    print_colored("    [i] Likely Web knock sequence", Colors.CYAN)
+                    print_colored("    [i] Likely Web knock sequence", Colors.WHITE)
         
         return self.responses
 
@@ -2189,7 +2189,7 @@ class NetworkScanner:
             return []
     
         network = self.get_network_range()
-        print_colored(f"[*] Scanning {network}...", Colors.CYAN)
+        print_colored(f"[*] Scanning {network}...", Colors.WHITE)
     
         try:
             # Phase 1: Fast nmap host discovery (single call, already parallel internally)
@@ -2206,7 +2206,7 @@ class NetworkScanner:
                 return []
         
             print_colored(f"[*] Enriching {len(live_hosts)} hosts with "
-                          f"{max_workers} threads...", Colors.CYAN)
+                          f"{max_workers} threads...", Colors.WHITE)
 
             # Phase 2: Threaded per-host enrichment (hostname + vendor)
             devices = []
@@ -2239,7 +2239,7 @@ class NetworkScanner:
                 print_colored(
                     f"  [+] {d['ip']:15} | {d['hostname'][:25]:25} | "
                     f"{d['vendor'][:15]:15} | {d['mac']}",
-                    Colors.CYAN
+                    Colors.WHITE
                 )
 
             self.devices = devices
@@ -2257,7 +2257,7 @@ class NetworkScanner:
     
         if show_progress:
             print_colored(f"[*] Scanning ports {start_port}-{end_port} "
-                          f"on {target} ({max_workers} workers)", Colors.CYAN)
+                          f"on {target} ({max_workers} workers)", Colors.WHITE)
     
         all_ports = list(range(start_port, end_port + 1))
         completed = 0
@@ -2298,7 +2298,7 @@ class NetworkScanner:
         if network is None:
             network = self.get_network_range()
         
-        print_colored(f"[*] Ping sweeping {network}...", Colors.CYAN)
+        print_colored(f"[*] Ping sweeping {network}...", Colors.WHITE)
         base_ip = network.rsplit('.', 1)[0]
         online = []
         
@@ -2331,7 +2331,7 @@ class NetworkScanner:
     
     def get_device_details(self, ip):
         """Get detailed device information"""
-        print_colored(f"\n[*] Fetching details for {ip}...", Colors.CYAN)
+        print_colored(f"\n[*] Fetching details for {ip}...", Colors.WHITE)
         
         try:
             self.nm.scan(hosts=ip, arguments='-sS -T4 -R -O -sV -p 1-1000')
@@ -2437,14 +2437,14 @@ class NetworkScanner:
             return
         
         print("\n" + "=" * 100)
-        print_colored(f"{'#':<4} {'IP Address':<18} {'Hostname':<30} {'Vendor':<25}", Colors.CYAN)
+        print_colored(f"{'#':<4} {'IP Address':<18} {'Hostname':<30} {'Vendor':<25}", Colors.WHITE)
         print("=" * 100)
         
         for idx, d in enumerate(devices, 1):
             print(f"{idx:<4} {d['ip']:<18} {d['hostname'][:30]:<30} {d['vendor'][:25]}")
         
         print("=" * 100)
-        print_colored(f"[*] Total: {len(devices)} devices", Colors.CYAN)
+        print_colored(f"[*] Total: {len(devices)} devices", Colors.WHITE)
     
     def print_device_details(self, ip=None):
         """Print detailed device information"""
@@ -2458,7 +2458,7 @@ class NetworkScanner:
             return
         
         print("\n" + "=" * 80)
-        print_colored(f"DEVICE DETAILS: {ip}", Colors.CYAN)
+        print_colored(f"DEVICE DETAILS: {ip}", Colors.WHITE)
         print("=" * 80)
         
         print("\n[Basic Info]")
@@ -2500,7 +2500,7 @@ class NetworkScanner:
         self.monitoring_active = True
         known_devices = set()
         
-        print_colored(f"[*] Starting continuous monitoring (interval: {interval}s)", Colors.CYAN)
+        print_colored(f"[*] Starting continuous monitoring (interval: {interval}s)", Colors.WHITE)
         print_colored("[*] Press Ctrl+C to stop", Colors.YELLOW)
         
         try:
@@ -2647,7 +2647,7 @@ def main_interactive():
             start_port = int(input("Start port (default 1): ") or 1)
             end_port = int(input("End port (default 1024): ") or 1024)
             open_ports = scanner.port_scan(target, start_port, end_port)
-            print_colored(f"\nFound {len(open_ports)} open ports:", Colors.CYAN)
+            print_colored(f"\nFound {len(open_ports)} open ports:", Colors.WHITE)
             for port in sorted(open_ports):
                 try:
                     service = socket.getservbyport(port)
@@ -2658,7 +2658,7 @@ def main_interactive():
         elif choice == 3:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Network Scanner - Device Discovery", Colors.CYAN)
+            print_colored("Network Scanner - Device Discovery", Colors.WHITE)
             print("=" * 60)
             devices = scanner.scan_devices()
             scanner.print_table(devices)
@@ -2670,7 +2670,7 @@ def main_interactive():
                 continue
             os.system('cls' if os.name == 'nt' else 'clear')
             print("\n" + "=" * 60)
-            print_colored("Device Details - Select an IP", Colors.CYAN)
+            print_colored("Device Details - Select an IP", Colors.WHITE)
             print("=" * 60)
             scanner.print_table(devices)
             print("\nOptions:")
@@ -2692,21 +2692,21 @@ def main_interactive():
         elif choice == 6:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Ping Sweep - Quick Network Scan", Colors.CYAN)
+            print_colored("Ping Sweep - Quick Network Scan", Colors.WHITE)
             print("=" * 60)
             network = input(f"Enter network range (default {scanner.get_network_range()}): ")
             if not network:
                 network = scanner.get_network_range()
             results = scanner.ping_sweep(network)
             if results:
-                print_colored(f"\n[*] {len(results)} host(s) online:", Colors.CYAN)
+                print_colored(f"\n[*] {len(results)} host(s) online:", Colors.WHITE)
                 for ip in sorted(results):
                     print(f"  {ip}")
         
         elif choice == 8:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Route Trace (Traceroute)", Colors.CYAN)
+            print_colored("Route Trace (Traceroute)", Colors.WHITE)
             print("=" * 60)
             target = input("Enter target IP or domain: ")
             scanner.topology_mapper.trace_route(target)
@@ -2714,7 +2714,7 @@ def main_interactive():
         elif choice == 9:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("DNS Enumeration", Colors.CYAN)
+            print_colored("DNS Enumeration", Colors.WHITE)
             print("=" * 60)
             domain = input("Enter domain to enumerate: ")
             scanner.dns_enum.enumerate(domain)
@@ -2724,12 +2724,12 @@ def main_interactive():
         elif choice == 10:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Packet Sniffer", Colors.CYAN)
+            print_colored("Packet Sniffer", Colors.WHITE)
             print("=" * 60)
             count = int(input("Number of packets to capture (default 100): ") or 100)
             scanner.packet_sniffer.sniff_packets(count=count)
             stats = scanner.packet_sniffer.get_statistics()
-            print_colored(f"\n[Statistics]", Colors.CYAN)
+            print_colored(f"\n[Statistics]", Colors.WHITE)
             print(f"  Total packets: {stats['total_packets']}")
             print(f"  HTTP requests: {stats['http_requests']}")
             print(f"  DNS queries: {stats['dns_queries']}")
@@ -2738,7 +2738,7 @@ def main_interactive():
         elif choice == 11:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Bandwidth Monitor", Colors.CYAN)
+            print_colored("Bandwidth Monitor", Colors.WHITE)
             print("=" * 60)
             interval = int(input("Monitoring interval in seconds (default 2): ") or 2)
             duration = input("Duration in seconds (0 for infinite): ")
@@ -2754,10 +2754,10 @@ def main_interactive():
         elif choice == 12:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Vulnerability Scanner", Colors.CYAN)
+            print_colored("Vulnerability Scanner", Colors.WHITE)
             print("=" * 60)
             target = input("Enter IP to scan for vulnerabilities: ")
-            print_colored("[*] First, scanning for open ports...", Colors.CYAN)
+            print_colored("[*] First, scanning for open ports...", Colors.WHITE)
             open_ports = scanner.port_scan(target, show_progress=True)
             if open_ports:
                 scanner.vulnerability_scanner.check_vulnerabilities(target, open_ports)
@@ -2768,7 +2768,7 @@ def main_interactive():
         elif choice == 13:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("WiFi Scanner", Colors.CYAN)
+            print_colored("WiFi Scanner", Colors.WHITE)
             print("=" * 60)
             scanner.wifi_scanner.scan_wifi()
             connect = input("\nConnect to a network? (y/n): ")
@@ -2782,7 +2782,7 @@ def main_interactive():
         elif choice == 14:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Web Application Scanner", Colors.CYAN)
+            print_colored("Web Application Scanner", Colors.WHITE)
             print("=" * 60)
             url = input("Enter URL to scan (e.g., http://example.com): ")
             scanner.web_scanner.scan_web_app(url)
@@ -2790,7 +2790,7 @@ def main_interactive():
         elif choice == 15:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("ARP Spoofing Detector", Colors.CYAN)
+            print_colored("ARP Spoofing Detector", Colors.WHITE)
             print("=" * 60)
             print_colored("[!] WARNING: This requires admin/root privileges", Colors.RED)
             interface = input("Network interface (leave blank for default): ")
@@ -2805,7 +2805,7 @@ def main_interactive():
         elif choice == 16:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("SSL Certificate Analyzer", Colors.CYAN)
+            print_colored("SSL Certificate Analyzer", Colors.WHITE)
             print("=" * 60)
             hostname = input("Enter hostname: ")
             port = int(input("Port (default 443): ") or 443)
@@ -2814,7 +2814,7 @@ def main_interactive():
         elif choice == 17:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Service Fingerprinter", Colors.CYAN)
+            print_colored("Service Fingerprinter", Colors.WHITE)
             print("=" * 60)
             ip = input("Enter IP address: ")
             port = int(input("Enter port: "))
@@ -2823,7 +2823,7 @@ def main_interactive():
         elif choice == 18:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Remote Access Scanner", Colors.CYAN)
+            print_colored("Remote Access Scanner", Colors.WHITE)
             print("=" * 60)
             ip = input("Enter IP address to scan: ")
             scanner.remote_scanner.scan_remote_access(ip)
@@ -2836,7 +2836,7 @@ def main_interactive():
         elif choice == 19:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Active Directory Scanner", Colors.CYAN)
+            print_colored("Active Directory Scanner", Colors.WHITE)
             print("=" * 60)
             dc = input("Enter Domain Controller IP: ")
             username = input("Enter username (optional): ")
@@ -2856,7 +2856,7 @@ def main_interactive():
         elif choice == 20:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Network Topology Mapper", Colors.CYAN)
+            print_colored("Network Topology Mapper", Colors.WHITE)
             print("=" * 60)
             target = input("Enter target IP for traceroute (optional): ")
             if target:
@@ -2876,7 +2876,7 @@ def main_interactive():
         elif choice == 21:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Port Knock Scanner", Colors.CYAN)
+            print_colored("Port Knock Scanner", Colors.WHITE)
             print("=" * 60)
             ip = input("Enter IP address: ")
             ports_input = input("Enter ports to test (comma-separated, e.g., 22,80,443): ")
@@ -2887,11 +2887,11 @@ def main_interactive():
         elif choice == 7:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Continuous Network Monitoring", Colors.CYAN)
+            print_colored("Continuous Network Monitoring", Colors.WHITE)
             print("=" * 60)
             interval = int(input("Monitoring interval in seconds (default 60): ") or 60)
             output_file = input("Output file (optional): ") or None
-            print_colored("\n[*] Starting continuous monitoring...", Colors.CYAN)
+            print_colored("\n[*] Starting continuous monitoring...", Colors.WHITE)
             print_colored("[*] Press Ctrl+C in the terminal to stop", Colors.YELLOW)
             try:
                 scanner.continuous_monitoring(interval=interval, output_file=output_file)
@@ -2901,7 +2901,7 @@ def main_interactive():
         elif choice == 5:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Export Results", Colors.CYAN)
+            print_colored("Export Results", Colors.WHITE)
             print("=" * 60)
             if not devices and not scanner.devices:
                 print_colored("[-] No devices to export. Please scan first.", Colors.RED)
@@ -2914,7 +2914,7 @@ def main_interactive():
         elif choice == 23:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("WiFi Deauth Detector", Colors.CYAN)
+            print_colored("WiFi Deauth Detector", Colors.WHITE)
             print("=" * 60)
             print_colored("[!] Requires: root + wireless NIC in monitor mode", Colors.RED)
             print_colored("[!] Quick setup: sudo airmon-ng start wlan0", Colors.YELLOW)
@@ -2938,7 +2938,7 @@ def main_interactive():
         elif choice == 22:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
-            print_colored("Generate Report", Colors.CYAN)
+            print_colored("Generate Report", Colors.WHITE)
             print("=" * 60)
             if not devices and not scanner.devices:
                 print_colored("[-] No devices found. Please scan first.", Colors.RED)
