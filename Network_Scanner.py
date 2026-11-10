@@ -82,41 +82,42 @@ def menu():
 \033[92m[6]  Ping Sweep
 \033[92m[8]  Route Trace (Traceroute)
 \033[92m[9]  DNS Enumeration
+\033[92m[10] Find Devices with Open Port
 
 \033[93m══════════════════════════════════════════════════════════════
 \033[93m  ADVANCED SCANNING
 \033[93m══════════════════════════════════════════════════════════════
-\033[93m[10] Packet Sniffer
-\033[93m[11] Bandwidth Monitor
-\033[93m[12] Vulnerability Scanner
-\033[93m[13] WiFi Scanner
-\033[93m[14] Web Application Scanner
-\033[93m[15] ARP Spoofing Detector
-\033[93m[16] SSL Certificate Analyzer
-\033[93m[17] Service Fingerprinter
-\033[93m[18] SSH/Remote Access Scanner
-\033[93m[19] WiFi Deauth Detector
+\033[93m[11] Packet Sniffer
+\033[93m[12] Bandwidth Monitor
+\033[93m[13] Vulnerability Scanner
+\033[93m[14] WiFi Scanner
+\033[93m[15] Web Application Scanner
+\033[93m[16] ARP Spoofing Detector
+\033[93m[17] SSL Certificate Analyzer
+\033[93m[18] Service Fingerprinter
+\033[93m[19] SSH/Remote Access Scanner
+\033[93m[20] WiFi Deauth Detector
 
 \033[94m══════════════════════════════════════════════════════════════
 \033[94m  ENTERPRISE FEATURES
 \033[94m══════════════════════════════════════════════════════════════
-\033[94m[20] Active Directory Scanner
-\033[94m[21] Network Topology Mapper
-\033[94m[22] Port Knock Scanner
+\033[94m[21] Active Directory Scanner
+\033[94m[22] Network Topology Mapper
+\033[94m[23] Port Knock Scanner
 
 \033[96m══════════════════════════════════════════════════════════════
 \033[96m  UTILITIES
 \033[96m══════════════════════════════════════════════════════════════
 \033[96m[7]  Continuous Monitoring
 \033[96m[5]  Export Results
-\033[96m[23] Generate Report
+\033[96m[24] Generate Report
 
 \033[91m[0]  Exit
 \033[0m
 """)
 
 # ================================================================
-# PACKET SNIFFER #
+# PACKET SNIFFER
 # ================================================================
 class PacketSniffer:
     def __init__(self):
@@ -2248,6 +2249,167 @@ class NetworkScanner:
         except Exception as e:
             print_colored(f"[-] Scan failed: {e}", Colors.RED)
             return []
+
+    def find_devices_with_port(self, port, network=None, show_progress=True, timeout=1, max_workers=100):
+        """
+        Scan the network and return only devices that have a specific port open.
+    
+        Args:
+            port: The port number to search for (e.g., 22, 80, 3389)
+            network: Network range (default: auto-detect local /24)
+            show_progress: Show progress bar
+            timeout: Socket timeout for port checks
+            max_workers: Thread count
+    
+        Returns:
+            List of devices (dicts) that have the port open
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+    
+        if network is None:
+            network = self.get_network_range()
+    
+        # Determine service name for this port
+        try:
+            service_name = socket.getservbyport(port)
+        except OSError:
+            service_name = 'unknown'
+    
+        print_colored(f"\n[*] Searching for devices with port {port} ({service_name}) open", Colors.WHITE)
+        print_colored(f"[*] Network: {network}", Colors.WHITE)
+    
+        # Phase 1: discover live hosts with ping sweep
+        base_ip = network.rsplit('.', 1)[0].replace('/24', '')
+        live_hosts = []
+    
+        def ping_host(ip):
+            try:
+                param = '-n' if os.name == 'nt' else '-c'
+                result = subprocess.run(
+                    ['ping', param, '1', '-w', '1000', ip],
+                    capture_output=True, text=True, timeout=2
+                )
+                return ip if result.returncode == 0 else None
+            except:
+                return None
+    
+        hosts_to_ping = [f"{base_ip}.{i}" for i in range(1, 255)]
+    
+        if show_progress:
+            pbar = tqdm(total=len(hosts_to_ping), desc="Discovering hosts", unit="host")
+    
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            futures = {executor.submit(ping_host, ip): ip for ip in hosts_to_ping}
+            for future in as_completed(futures):
+                if show_progress:
+                    pbar.update(1)
+                r = future.result()
+                if r:
+                    live_hosts.append(r)
+    
+        if show_progress:
+            pbar.close()
+    
+        if not live_hosts:
+            print_colored("[-] No live hosts found", Colors.YELLOW)
+            return []
+    
+        print_colored(f"[+] {len(live_hosts)} live host(s) found, checking port {port}...", Colors.GREEN)
+    
+        # Phase 2: check the target port on each live host
+        def check_port(ip):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(socket.getdefaulttimeout())
+                result = sock.connect_ex((ip, port))
+                sock.close()
+                return ip if result == 0 else None
+            except:
+                return None
+    
+        matching_ips = []
+    
+        if show_progress:
+            pbar2 = tqdm(total=len(live_hosts), desc=f"Checking port {port}", unit="host")
+    
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(check_port, ip): ip for ip in live_hosts}
+            for future in as_completed(futures):
+                if show_progress:
+                    pbar2.update(1)
+                r = future.result()
+                if r:
+                    matching_ips.append(r)
+    
+        if show_progress:
+            pbar2.close()
+    
+        if not matching_ips:
+            print_colored(f"[-] No devices found with port {port} open", Colors.YELLOW)
+            return []
+    
+        # Phase 3: enrich matching hosts with hostname/vendor info
+        print_colored(f"[+] {len(matching_ips)} device(s) have port {port} open! Enriching...", Colors.GREEN)
+    
+        results = []
+        for ip in matching_ips:
+            # Look up hostname
+            hostname = self.get_hostname_dns(ip) or self.get_hostname_nbns(ip) or 'Unknown'
+        
+            # Look up MAC via ARP
+            mac = 'Unknown'
+            try:
+                if os.name == 'nt':
+                    r = subprocess.run(['arp', '-a', ip], capture_output=True, text=True, timeout=2)
+                    for line in r.stdout.split('\n'):
+                        if ip in line:
+                            parts = line.split()
+                            if len(parts) >= 3:
+                                mac = parts[1].upper()
+                                break
+                else:
+                    r = subprocess.run(['arp', '-n', ip], capture_output=True, text=True, timeout=2)
+                    for line in r.stdout.split('\n'):
+                        if ip in line and 'ether' in line:
+                            parts = line.split()
+                            if len(parts) >= 3:
+                                mac = parts[2].upper()
+                                break
+            except:
+                pass
+        
+            vendor = self.get_vendor_from_mac(mac)
+        
+            results.append({
+                'ip': ip,
+                'hostname': hostname,
+                'mac': mac,
+                'vendor': vendor,
+                'port': port,
+                'service': service_name,
+                'status': 'online',
+                'last_seen': datetime.now().isoformat()
+            })
+    
+        # Print results
+        print("\n" + "=" * 100)
+        print_colored(
+            f"{'#':<4} {'IP Address':<18} {'Hostname':<30} {'Vendor':<25} {'Port':<8}",
+            Colors.WHITE
+        )
+        print("=" * 100)
+        for idx, d in enumerate(results, 1):
+            print(
+                f"{idx:<4} {d['ip']:<18} {d['hostname'][:30]:<30} "
+                f"{d['vendor'][:25]:<25} {d['port']:<8}"
+            )
+        print("=" * 100)
+        print_colored(
+            f"[*] {len(results)} device(s) found with port {port} ({service_name}) open",
+            Colors.WHITE
+        )
+    
+        return results
     
     def port_scan(self, target, start_port=1, end_port=1024, timeout=1, 
               max_workers=200, show_progress=True, batch_size=1000):
@@ -2720,22 +2882,7 @@ def main_interactive():
             scanner.dns_enum.enumerate(domain)
             print("\n" + scanner.dns_enum.get_report())
         
-        # Advanced Scanning
-        elif choice == 10:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("=" * 60)
-            print_colored("Packet Sniffer", Colors.WHITE)
-            print("=" * 60)
-            count = int(input("Number of packets to capture (default 100): ") or 100)
-            scanner.packet_sniffer.sniff_packets(count=count)
-            stats = scanner.packet_sniffer.get_statistics()
-            print_colored(f"\n[Statistics]", Colors.WHITE)
-            print(f"  Total packets: {stats['total_packets']}")
-            print(f"  HTTP requests: {stats['http_requests']}")
-            print(f"  DNS queries: {stats['dns_queries']}")
-            print(f"  Credentials found: {stats['credentials_found']}")
-        
-        elif choice == 11:
+        elif choice == 12:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Bandwidth Monitor", Colors.WHITE)
@@ -2751,7 +2898,7 @@ def main_interactive():
                 print(f"Average Download: {stats['avg_download']:.2f} Mbps")
                 print(f"Max Download: {stats['max_download']:.2f} Mbps")
         
-        elif choice == 12:
+        elif choice == 13:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Vulnerability Scanner", Colors.WHITE)
@@ -2765,7 +2912,7 @@ def main_interactive():
             else:
                 print_colored("[-] No open ports found", Colors.RED)
         
-        elif choice == 13:
+        elif choice == 14:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("WiFi Scanner", Colors.WHITE)
@@ -2779,7 +2926,7 @@ def main_interactive():
                     password = input("Enter password (press Enter for open network): ")
                     scanner.wifi_scanner.connect_to_network(net['ssid'], password if password else None)
         
-        elif choice == 14:
+        elif choice == 15:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Web Application Scanner", Colors.WHITE)
@@ -2787,7 +2934,7 @@ def main_interactive():
             url = input("Enter URL to scan (e.g., http://example.com): ")
             scanner.web_scanner.scan_web_app(url)
         
-        elif choice == 15:
+        elif choice == 16:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("ARP Spoofing Detector", Colors.WHITE)
@@ -2802,7 +2949,7 @@ def main_interactive():
             print(f"  Devices monitored: {stats['devices_monitored']}")
             print(f"  Attacks detected: {stats['attacks_detected']}")
         
-        elif choice == 16:
+        elif choice == 17:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("SSL Certificate Analyzer", Colors.WHITE)
@@ -2811,7 +2958,7 @@ def main_interactive():
             port = int(input("Port (default 443): ") or 443)
             scanner.cert_analyzer.analyze_certificate(hostname, port)
         
-        elif choice == 17:
+        elif choice == 18:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Service Fingerprinter", Colors.WHITE)
@@ -2820,7 +2967,7 @@ def main_interactive():
             port = int(input("Enter port: "))
             scanner.service_fingerprinter.fingerprint_service(ip, port)
         
-        elif choice == 18:
+        elif choice == 19:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Remote Access Scanner", Colors.WHITE)
@@ -2833,7 +2980,7 @@ def main_interactive():
                     print(f"  {login['service']} - {login['username']}:{login['password']}")
         
         # Enterprise Features
-        elif choice == 19:
+        elif choice == 20:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Active Directory Scanner", Colors.WHITE)
@@ -2853,7 +3000,7 @@ def main_interactive():
                     print(f"  Domain: {info['domain']}")
                     print(f"  Forest: {info['forest']}")
         
-        elif choice == 20:
+        elif choice == 21:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Network Topology Mapper", Colors.WHITE)
@@ -2873,7 +3020,7 @@ def main_interactive():
             if topology.get('hops'):
                 print(f"  Hops: {len(topology['hops'])}")
         
-        elif choice == 21:
+        elif choice == 22:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Port Knock Scanner", Colors.WHITE)
@@ -2935,7 +3082,7 @@ def main_interactive():
             )
             print("\n" + scanner.deauth_detector.get_report())
         
-        elif choice == 22:
+        elif choice == 23:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("=" * 60)
             print_colored("Generate Report", Colors.WHITE)
@@ -2980,7 +3127,119 @@ def main_interactive():
                 f.write("\n".join(report))
             print_colored(f"[+] Report saved to {filename}", Colors.GREEN)
             print("\n" + "\n".join(report))
+
+        elif choice == 10:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("=" * 60)
+            print_colored("Find Devices with Specific Open Port", Colors.WHITE)
+            print("=" * 60)
+    
+            print_colored("Common ports:", Colors.YELLOW)
+            print("  21=FTP  22=SSH  23=Telnet  25=SMTP  53=DNS")
+            print("  80=HTTP  135=RPC  139=NetBIOS  443=HTTPS  445=SMB")
+            print("  1433=MSSQL  3306=MySQL  3389=RDP  5432=PostgreSQL")
+            print("  5900=VNC  6379=Redis  8080=HTTP-Alt  9200=Elasticsearch")
+            print()
+    
+            port_input = input("Enter port number to search for: ").strip()
+            try:
+                target_port = int(port_input)
+                if not (0 < target_port < 65536):
+                    raise ValueError
+            except ValueError:
+                print_colored("[-] Invalid port number", Colors.RED)
+                input("\nPress Enter...")
+                continue
+    
+            network_input = input(f"Network range (default {scanner.get_network_range()}): ").strip()
+            network = network_input if network_input else None
+    
+            matches = scanner.find_devices_with_port(
+                target_port, network=network, show_progress=True
+            )
+    
+            if matches:
+                save = input("\nSave results? (y/n): ").strip().lower()
+                if save == 'y':
+                    scanner.export_results(matches)
+
+                elif choice == 11:
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print("=" * 60)
+                    print_colored("Find Devices with Specific Open Port", Colors.WHITE)
+                    print("=" * 60)
+    
+                    # Show common port reference
+                    print_colored("Common ports:", Colors.YELLOW)
+                    print("  21=FTP  22=SSH  23=Telnet  25=SMTP  53=DNS")
+                    print("  80=HTTP  135=RPC  139=NetBIOS  443=HTTPS  445=SMB")
+                    print("  1433=MSSQL  3306=MySQL  3389=RDP  5432=PostgreSQL")
+                    print("  5900=VNC  6379=Redis  8080=HTTP-Alt  9200=Elasticsearch")
+                    print()
+
+                    port_input = input("Enter port number to search for: ").strip()
+                    try:
+                        target_port = int(port_input)
+                        if not (0 < target_port < 65536):
+                            raise ValueError
+                    except ValueError:
+                        print_colored("[-] Invalid port number", Colors.RED)
+                        input("\nPress Enter...")
+                        continue
+
+                    network_input = input(f"Network range (default {scanner.get_network_range()}): ").strip()
+                    network = network_input if network_input else None
+
+                    # Optional: multiple ports
+                    multi = input("Search for multiple ports instead? (y/N): ").strip().lower()
+
+                    if multi == 'y':
+                        ports_input = input("Enter ports (comma-separated, e.g. 22,80,443): ").strip()
+                        try:
+                            ports_to_check = [int(p.strip()) for p in ports_input.split(',') if p.strip()]
+                        except ValueError:
+                            print_colored("[-] Invalid port list", Colors.RED)
+                            input("\nPress Enter...")
+                            continue
         
+                # Scan each port and merge results
+                all_matches = {}
+                for p in ports_to_check:
+                    matches = scanner.find_devices_with_port(
+                        p, network=network, show_progress=True
+                    )
+                    for m in matches:
+                        if m['ip'] not in all_matches:
+                            all_matches[m['ip']] = m
+                            all_matches[m['ip']]['open_ports'] = []
+                        all_matches[m['ip']]['open_ports'].append(p)
+        
+                # Display merged results
+                print("\n" + "=" * 100)
+                print_colored("MULTI-PORT RESULTS", Colors.WHITE)
+                print("=" * 100)
+                for ip, info in all_matches.items():
+                    print_colored(
+                        f"  {ip:18} {info['hostname'][:25]:25} "
+                        f"{info['vendor'][:20]:20} ports: {info['open_ports']}",
+                        Colors.GREEN
+                    )
+                print("=" * 100)
+
+                if all_matches:
+                    save = input("\nSave results? (y/n): ").strip().lower()
+                    if save == 'y':
+                        scanner.export_results(list(all_matches.values()))
+            else:
+                matches = scanner.find_devices_with_port(
+                    target_port, network=network, show_progress=True
+                )
+
+                if matches:
+                    save = input("\nSave results? (y/n): ").strip().lower()
+                    if save == 'y':
+                        scanner.export_results(matches)
+
         elif choice == 0:
             if scanner.monitoring_active:
                 scanner.stop_monitoring()
@@ -2988,7 +3247,7 @@ def main_interactive():
             break
         else:
             print_colored("Invalid option", Colors.RED)
-        
+
         input("\nPress Enter to continue...")
 
 # ================================================================
@@ -3091,9 +3350,45 @@ def main_cli():
             scanner.port_scan(args.target, start_port=1, end_port=1024, 
                             timeout=0.5, max_workers=50, show_progress=not args.no_progress)
         return
+
+    if args.find_port:
+        results = scanner.find_devices_with_port(
+        args.find_port, 
+        network=args.target if args.target else None,
+        show_progress=not args.no_progress
+    )
+
+    if args.ports_list:
+            try:
+                ports = [int(p.strip()) for p in args.ports_list.split(',')]
+            except ValueError:
+                print_colored("[-] Invalid port list", Colors.RED)
+                return
+        
+            all_matches = {}
+            for p in ports:
+                for m in scanner.find_devices_with_port(p, show_progress=not args.no_progress):
+                    if m['ip'] not in all_matches:
+                        all_matches[m['ip']] = m
+                        all_matches[m['ip']]['open_ports'] = []
+                    all_matches[m['ip']]['open_ports'].append(p)
+        
+            print_colored(f"\n[+] {len(all_matches)} device(s) matched:", Colors.GREEN)
+            for ip, info in all_matches.items():
+                print(f"  {ip:18} {info['hostname'][:25]:25} ports: {info['open_ports']}")
     
-    # If no arguments, run interactive
-    main_interactive()
+            if args.output:
+                scanner.export_results(list(all_matches.values()), args.output)
+            return
+    
+            # If no arguments, run interactive
+            main_interactive()
+
+    if args.output:
+        scanner.export_results(results, args.output)
+    return
+
+    
 
 # ================================================================
 # MAIN ENTRY POINT
